@@ -34,15 +34,10 @@
         }
 
         body {
-            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.8)), url('https://i.pinimg.com/736x/8e/3e/dc/8e3edc11f58245f2b9257a7a2a71277d.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             color: var(--text-main);
             min-height: 100vh;
             padding: 2rem;
-            position: relative;
-            background-attachment: fixed;
         }
 
         .container {
@@ -279,7 +274,8 @@
 <body>
 
     <div class="container">
-        <header>
+        <header style="text-align: center; margin-bottom: 2rem;">
+            <img src="https://i.pinimg.com/736x/8e/3e/dc/8e3edc11f58245f2b9257a7a2a71277d.jpg" alt="Encabezado" style="max-width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
             <h1>Generador de Pedidos</h1>
             <p class="subtitle">Completa la información para exportar tu archivo Excel de pedidos</p>
         </header>
