@@ -14,7 +14,10 @@ def generate():
     try:
         data = request.json
         client_name = data.get('client_name', '')
+        phone = data.get('phone', '')
         address = data.get('address', '')
+        city = data.get('city', '')
+        zip_code = data.get('zip_code', '')
         items = data.get('items', [])
         grand_total = data.get('grand_total', 0)
 
@@ -24,6 +27,7 @@ def generate():
         # Estilos generales
         red_fill = PatternFill(start_color='FF0000', end_color='FF0000', fill_type='solid')
         white_font_bold = Font(color='FFFFFF', bold=True, size=12)
+        large_white_font_bold = Font(color='FFFFFF', bold=True, size=24)
         center_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
         thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
         
@@ -38,28 +42,42 @@ def generate():
         ws.column_dimensions['H'].width = 15
         ws.column_dimensions['I'].width = 15
 
-        # Fila 1: Cliente
+        # Fila 1: Cliente y Telefono
+        ws.row_dimensions[1].height = 60
         ws.merge_cells('A1:F1')
         ws['A1'] = f"NOMBRE DEL CLIENTE (CUSTOMER NAME) : {client_name}"
         ws['A1'].fill = red_fill
-        ws['A1'].font = white_font_bold
+        ws['A1'].font = large_white_font_bold
         ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
         
         ws.merge_cells('G1:I1')
-        ws['G1'] = "PRECIO TOTAL (YUANES):"
+        ws['G1'] = f"TELEFONO: {phone}"
         ws['G1'].fill = red_fill
-        ws['G1'].font = white_font_bold
-        ws['G1'].alignment = Alignment(horizontal='right', vertical='center')
+        ws['G1'].font = large_white_font_bold
+        ws['G1'].alignment = Alignment(horizontal='center', vertical='center')
 
-        # Fila 2: Dirección
-        ws.merge_cells('A2:I2')
+        # Fila 2: Dirección, Ciudad, Codigo Postal
+        ws.row_dimensions[2].height = 60
+        ws.merge_cells('A2:C2')
         ws['A2'] = f"DIRECCIÓN: {address}"
         ws['A2'].fill = red_fill
-        ws['A2'].font = white_font_bold
+        ws['A2'].font = large_white_font_bold
         ws['A2'].alignment = Alignment(horizontal='center', vertical='center')
 
-        # Fila 3: Cabeceras
-        headers = ["Nº", "PRODUCTO\n(COLOCAR IMAGEN)", "PEDIDO (COLOCAR IMAGEN CON EL MIX DE PRODUCTOS DESEADOS)", "DESCRIPCIÓN DE PRODUCTO (TALLA , COLOR, MODELO)", "TOTAL(EN\nCANTIDAD)", "ENLACE\n(1688 / TAOBAO)", "PEDIDO TOTAL (YUANES)", "PRECIO UNIDAD\n(YUANES)", "PRECIO TOTAL (YUANES)"]
+        ws.merge_cells('D2:F2')
+        ws['D2'] = f"CIUDAD: {city}"
+        ws['D2'].fill = red_fill
+        ws['D2'].font = large_white_font_bold
+        ws['D2'].alignment = Alignment(horizontal='center', vertical='center')
+
+        ws.merge_cells('G2:I2')
+        ws['G2'] = f"CODIGO POSTAL: {zip_code}"
+        ws['G2'].fill = red_fill
+        ws['G2'].font = large_white_font_bold
+        ws['G2'].alignment = Alignment(horizontal='center', vertical='center')
+
+        # Fila 3: Cabeceras sin paréntesis
+        headers = ["Nº", "PRODUCTO", "PEDIDO", "DESCRIPCIÓN DE PRODUCTO", "TOTAL", "ENLACE", "PEDIDO TOTAL", "PRECIO UNIDAD", "PRECIO TOTAL"]
         ws.row_dimensions[3].height = 40
         for col_num, header in enumerate(headers, 1):
             cell = ws.cell(row=3, column=col_num, value=header)
@@ -78,9 +96,17 @@ def generate():
             ws.cell(row=current_row, column=4, value=item.get('desc', '')).alignment = center_align
             ws.cell(row=current_row, column=5, value=item.get('total', '')).alignment = center_align
             ws.cell(row=current_row, column=6, value=item.get('link', '')).alignment = center_align
+            # Formato de Yuanes para contabilidad
+            yuan_format = '_-"¥"* #,##0.00_-;\\-"¥"* #,##0.00_-;_-"¥"* "-"??_-;_-@_-'
+            
             ws.cell(row=current_row, column=7, value=item.get('total_pedido', 0)).alignment = center_align
+            ws.cell(row=current_row, column=7).number_format = yuan_format
+            
             ws.cell(row=current_row, column=8, value=item.get('precio_unidad', 0)).alignment = center_align
+            ws.cell(row=current_row, column=8).number_format = yuan_format
+            
             ws.cell(row=current_row, column=9, value=item.get('precio_total', 0)).alignment = center_align
+            ws.cell(row=current_row, column=9).number_format = yuan_format
 
             # Bordes para todas las celdas
             for col in range(1, 10):
@@ -146,15 +172,17 @@ def generate():
 
         # Fila de Total
         ws.merge_cells(f'D{current_row}:H{current_row}')
-        cell_total_text = ws.cell(row=current_row, column=4, value="PRECIO TOTAL (YUANES)")
+        cell_total_text = ws.cell(row=current_row, column=4, value="PRECIO TOTAL")
         cell_total_text.fill = red_fill
         cell_total_text.font = white_font_bold
         cell_total_text.alignment = Alignment(horizontal='right', vertical='center')
         
+        yuan_format = '_-"¥"* #,##0.00_-;\\-"¥"* #,##0.00_-;_-"¥"* "-"??_-;_-@_-'
         cell_total_val = ws.cell(row=current_row, column=9, value=grand_total)
         cell_total_val.fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
         cell_total_val.font = Font(bold=True)
         cell_total_val.alignment = center_align
+        cell_total_val.number_format = yuan_format
 
         for col in range(4, 10):
             ws.cell(row=current_row, column=col).border = thin_border

@@ -438,8 +438,6 @@
                 const address = document.getElementById('customer-address').value;
                 const city = document.getElementById('customer-city').value;
                 const zip_code = document.getElementById('customer-zip').value;
-                
-                const full_address = `${address}, ${city}, ${zip_code} | TEL: ${phone}`;
 
                 const itemsElements = document.querySelectorAll('.product-item');
                 let items = [];
@@ -482,7 +480,10 @@
 
                 const payload = {
                     client_name,
-                    address: full_address,
+                    phone,
+                    address,
+                    city,
+                    zip_code,
                     items,
                     grand_total: grandTotal
                 };
