@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Pedidos Excel</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ExcelJS & FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .glass-panel {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.6s ease-out backwards;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="text"], 
+        input[type="number"], 
+        input[type="tel"] {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        input[type="file"] {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--border);
+            padding: 0.5rem;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="file"]:hover {
+            border-color: var(--primary);
+        }
+
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .product-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .product-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .product-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product-number {
+            font-weight: 600;
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .btn-remove {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-remove:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-add {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-add:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            flex: 1;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .btn-generate:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+            transform: translateY(-1px);
+        }
+        
+        .btn-generate:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Generador de Pedidos</h1>
+            <p class="subtitle">Completa la información para exportar tu archivo Excel de pedidos</p>
+        </header>
+
+        <main>
+            <!-- Información del Cliente -->
+            <section class="glass-panel" style="animation-delay: 0.1s;">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Información del Cliente
+                </h2>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Nombre del Cliente</label>
+                        <input type="text" id="customer-name" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="customer-phone" placeholder="Ej. +1 234 567 890">
+                    </div>
+                    <div class="input-group">
+                        <label>Dirección</label>
+                        <input type="text" id="customer-address" placeholder="Av. Principal 123">
+                    </div>
+                    <div class="input-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="customer-city" placeholder="Ej. Lima">
+                    </div>
+                    <div class="input-group">
+                        <label>Código Postal</label>
+                        <input type="text" id="customer-zip" placeholder="Ej. 15001">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lista de Productos -->
+            <section class="glass-panel" id="products-section" style="animation-delay: 0.2s;">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path></svg>
+                    Detalle de Productos
+                </h2>
+                
+                <div class="product-list" id="product-list">
+                    <!-- Los productos se agregarán aquí dinámicamente -->
+                </div>
+
+                <div class="actions">
+                    <button class="btn-add" onclick="addProduct()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Añadir Producto
+                    </button>
+                    <button class="btn-generate" id="btn-generate" onclick="generateExcel()">
+                        <span class="btn-text">Generar Excel</span>
+                        <div class="spinner" id="btn-spinner"></div>
+                        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Template for Product Item -->
+    <template id="product-template">
+        <div class="product-item">
+            <div class="product-item-header">
+                <span class="product-number">Producto #<span class="num">1</span></span>
+                <button class="btn-remove" onclick="removeProduct(this)">Eliminar</button>
+            </div>
+            <div class="product-grid">
+                <div class="input-group">
+                    <label>Imagen del Producto</label>
+                    <input type="file" class="prod-img" accept="image/*">
+                </div>
+                <div class="input-group">
+                    <label>Imagen Mix (Pedido)</label>
+                    <input type="file" class="mix-img" accept="image/*">
+                </div>
+                <div class="input-group">
+                    <label>Descripción</label>
+                    <input type="text" class="desc" placeholder="Nombre o detalle">
+                </div>
+                <div class="input-group">
+                    <label>Total (Cantidad)</label>
+                    <input type="text" class="total" placeholder="Ej. 10 cajas">
+                </div>
+                <div class="input-group">
+                    <label>Enlace / Link</label>
+                    <input type="text" class="link" placeholder="https://...">
+                </div>
+                <div class="input-group">
+                    <label>Total de Pedido</label>
+                    <input type="number" class="total-pedido" placeholder="0" min="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Precio por Unidad (Yuanes)</label>
+                    <input type="number" class="precio-unidad" placeholder="0.00" min="0" step="0.01">
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        let productCount = 0;
+
+        function addProduct() {
+            productCount++;
+            const template = document.getElementById('product-template');
+            const clone = template.content.cloneNode(true);
+            
+            clone.querySelector('.num').textContent = productCount;
+            document.getElementById('product-list').appendChild(clone);
+            updateProductNumbers();
+        }
+
+        function removeProduct(button) {
+            button.closest('.product-item').remove();
+            updateProductNumbers();
+        }
+
+        function updateProductNumbers() {
+            const items = document.querySelectorAll('.product-item');
+            items.forEach((item, index) => {
+                item.querySelector('.num').textContent = index + 1;
+            });
+            productCount = items.length;
+        }
+
+        // Initialize with one product
+        window.onload = () => {
+            addProduct();
+        };
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        const getImageDimensions = (base64) => new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.src = base64;
+        });
+
+        async function generateExcel() {
+            const btn = document.getElementById('btn-generate');
+            const spinner = document.getElementById('btn-spinner');
+            const btnText = document.querySelector('.btn-text');
+            const btnIcon = document.querySelector('.btn-icon');
+
+            try {
+                btn.disabled = true;
+                btnText.textContent = 'Generando...';
+                spinner.style.display = 'block';
+                btnIcon.style.display = 'none';
+
+                const client_name = document.getElementById('customer-name').value.toUpperCase();
+                const phone = document.getElementById('customer-phone').value;
+                const address = document.getElementById('customer-address').value;
+                const city = document.getElementById('customer-city').value;
+                const zip_code = document.getElementById('customer-zip').value;
+                
+                const full_address = `${address}, ${city}, ${zip_code} | TEL: ${phone}`;
+
+                const itemsElements = document.querySelectorAll('.product-item');
+                let items = [];
+                let grandTotal = 0;
+
+                for (let i = 0; i < itemsElements.length; i++) {
+                    const item = itemsElements[i];
+                    
+                    const desc = item.querySelector('.desc').value;
+                    const total = item.querySelector('.total').value;
+                    const link = item.querySelector('.link').value;
+                    const totalPedido = parseFloat(item.querySelector('.total-pedido').value) || 0;
+                    const precioUnidad = parseFloat(item.querySelector('.precio-unidad').value) || 0;
+                    const precioTotal = totalPedido * precioUnidad;
+                    grandTotal += precioTotal;
+
+                    let prod_img_b64 = null;
+                    const prodImgInput = item.querySelector('.prod-img');
+                    if (prodImgInput.files && prodImgInput.files[0]) {
+                        prod_img_b64 = await fileToBase64(prodImgInput.files[0]);
+                    }
+
+                    let mix_img_b64 = null;
+                    const mixImgInput = item.querySelector('.mix-img');
+                    if (mixImgInput.files && mixImgInput.files[0]) {
+                        mix_img_b64 = await fileToBase64(mixImgInput.files[0]);
+                    }
+
+                    items.push({
+                        desc,
+                        total,
+                        link,
+                        total_pedido: totalPedido,
+                        precio_unidad: precioUnidad,
+                        precio_total: precioTotal,
+                        prod_img: prod_img_b64,
+                        mix_img: mix_img_b64
+                    });
+                }
+
+                const payload = {
+                    client_name,
+                    address: full_address,
+                    items,
+                    grand_total: grandTotal
+                };
+
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en el servidor al generar Excel');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'PEDIDO_1688.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+                alert('¡Excel generado con éxito desde el servidor!');
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al generar el Excel: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Generar Excel';
+                spinner.style.display = 'none';
+                btnIcon.style.display = 'inline-block';
+            }
+        }
+    </script>
+</body>
+</html>
