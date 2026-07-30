@@ -102,7 +102,18 @@ def generate():
             ws.cell(row=current_row, column=1, value=idx).alignment = center_align
             ws.cell(row=current_row, column=4, value=item.get('desc', '')).alignment = center_align
             ws.cell(row=current_row, column=5, value=item.get('total', '')).alignment = center_align
-            ws.cell(row=current_row, column=6, value=item.get('link', '')).alignment = center_align
+            
+            link_val = item.get('link', '')
+            link_cell = ws.cell(row=current_row, column=6, value=link_val)
+            link_cell.alignment = center_align
+            if link_val:
+                # Nos aseguramos de que tenga un esquema de url válido para excel
+                if not (link_val.startswith('http://') or link_val.startswith('https://')):
+                    link_cell.hyperlink = 'https://' + link_val
+                else:
+                    link_cell.hyperlink = link_val
+                link_cell.font = Font(color="0000FF", underline="single")
+                link_cell.value = link_val  # Set value explicitly for display
             # Formato de Yuanes para contabilidad
             yuan_format = '_-"¥"* #,##0.00_-;\\-"¥"* #,##0.00_-;_-"¥"* "-"??_-;_-@_-'
             
