@@ -38,9 +38,16 @@ def generate():
         ws.column_dimensions['D'].width = 25
         ws.column_dimensions['E'].width = 15
         ws.column_dimensions['F'].width = 15
-        ws.column_dimensions['G'].width = 20
+        ws.column_dimensions['G'].width = 22
         ws.column_dimensions['H'].width = 15
         ws.column_dimensions['I'].width = 15
+
+        # Aplicar fondo y borde a todas las celdas de fila 1 y 2 antes de hacer merge
+        for r in range(1, 3):
+            for c in range(1, 10):
+                cell = ws.cell(row=r, column=c)
+                cell.fill = red_fill
+                cell.border = thin_border
 
         # Fila 1: Cliente y Telefono
         ws.row_dimensions[1].height = 60
@@ -100,7 +107,7 @@ def generate():
             yuan_format = '_-"¥"* #,##0.00_-;\\-"¥"* #,##0.00_-;_-"¥"* "-"??_-;_-@_-'
             
             ws.cell(row=current_row, column=7, value=item.get('total_pedido', 0)).alignment = center_align
-            ws.cell(row=current_row, column=7).number_format = yuan_format
+            # Eliminado formato de yuanes para columna 7 (cantidad)
             
             ws.cell(row=current_row, column=8, value=item.get('precio_unidad', 0)).alignment = center_align
             ws.cell(row=current_row, column=8).number_format = yuan_format
