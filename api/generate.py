@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 import io
 import openpyxl
 from openpyxl.drawing.image import Image as OpenpyxlImage
@@ -6,12 +6,39 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 import base64
 from io import BytesIO
 from PIL import Image as PILImage
+import urllib.request
+import json
 
 app = Flask(__name__)
+
+@app.route('/api/check', methods=['GET'])
+def check_limit():
+    try:
+        url = 'https://api.counterapi.dev/v1/alex_probar_nomas/generador_excel'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            count = data.get('count', 0)
+            if count >= 100:
+                return jsonify({"blocked": True, "count": count})
+            return jsonify({"blocked": False, "count": count})
+    except Exception as e:
+        return jsonify({"blocked": False, "count": 0})
 
 @app.route('/api/generate', methods=['POST'])
 def generate():
     try:
+        # Incrementar contador y verificar bloqueo
+        try:
+            url = 'https://api.counterapi.dev/v1/alex_probar_nomas/generador_excel/up'
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                count_data = json.loads(response.read().decode())
+                if count_data.get('count', 0) > 100:
+                    return jsonify({"error": "Límite máximo alcanzado"}), 403
+        except Exception:
+            pass # Si la API del contador falla, permitimos continuar
+            
         data = request.json
         client_name = data.get('client_name', '')
         phone = data.get('phone', '')

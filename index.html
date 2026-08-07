@@ -274,6 +274,28 @@
     </style>
 </head>
 <body>
+    <script>
+        async function checkLimit() {
+            try {
+                const response = await fetch('/api/check');
+                const data = await response.json();
+                if (data.blocked) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; text-align: center; font-family: 'Outfit', sans-serif;">
+                            <h1 style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">🚫 Acceso Bloqueado</h1>
+                            <p style="font-size: 1.5rem;">Se ha alcanzado el límite máximo de 100 exportaciones permitidas.</p>
+                            <p style="font-size: 1rem; color: #94a3b8; margin-top: 1rem;">Gracias por probar el sistema.</p>
+                        </div>
+                    `;
+                    document.body.style.background = "#0f172a";
+                    document.body.style.padding = "0";
+                }
+            } catch (e) {
+                console.error("Error verificando límite", e);
+            }
+        }
+        checkLimit();
+    </script>
 
     <div class="container">
         <header>
